@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from pyspark.sql import SparkSession
+from pyspark.sql.functions import countDistinct
 
 
 def build_daily_signups(
@@ -17,9 +18,8 @@ def build_daily_signups(
     daily_signups_df = (
         signups_df
         .groupBy("signup_date")
-        .count()
+        .agg(countDistinct("client_id").alias("signup_count"))
         .withColumnRenamed("signup_date", "metric_date")
-        .withColumnRenamed("count", "signup_count")
     )
 
     daily_signups_df.write.mode("overwrite").parquet(str(output_path))
