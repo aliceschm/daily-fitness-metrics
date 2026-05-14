@@ -1,3 +1,4 @@
+import argparse
 from pyspark.sql import SparkSession
 
 from src.processing.daily_active_clients import (
@@ -5,28 +6,24 @@ from src.processing.daily_active_clients import (
 )
 
 
-METRIC_DATE = "2026-05-13"
-
-
 def create_spark() -> SparkSession:
     return (
-        SparkSession.builder
-        .appName("build-daily-active-clients")
+        SparkSession.builder.appName("build-daily-active-clients")
         .master("local[2]")
         .getOrCreate()
     )
 
 
-def main() -> None:
+def main(metric_date: str) -> None:
     spark = create_spark()
 
     build_daily_active_clients(
         spark=spark,
-        metric_date=METRIC_DATE,
+        metric_date=metric_date,
     )
 
     result_df = spark.read.parquet(
-        f"staging_metrics/daily_active_clients/date={METRIC_DATE}"
+        f"staging_metrics/daily_active_clients/date={metric_date}"
     )
 
     result_df.show()
@@ -35,4 +32,13 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "--metric-date",
+        required=True,
+    )
+
+    args = parser.parse_args()
+
+    main(metric_date=args.metric_date)
