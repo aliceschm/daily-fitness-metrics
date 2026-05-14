@@ -25,8 +25,7 @@ def build_daily_metrics(
     daily_usage_rate_df = spark.read.parquet(str(usage_rate_path))
 
     daily_metrics_df = (
-        daily_signups_df
-        .join(daily_checkins_df, on="metric_date", how="inner")
+        daily_signups_df.join(daily_checkins_df, on="metric_date", how="inner")
         .join(daily_active_clients_df, on="metric_date", how="inner")
         .join(daily_usage_rate_df, on="metric_date", how="inner")
         .select(

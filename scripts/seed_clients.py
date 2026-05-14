@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 CLIENT_COUNT = 13_007
 
 
@@ -18,18 +17,11 @@ def seed_clients() -> None:
         "w",
         encoding="utf-8",
     ) as file:
-        file.write(
-            "client_id,status,location_id,created_at\n"
-        )
+        file.write("client_id,status,location_id,created_at\n")
 
         for i in range(CLIENT_COUNT):
             file.write(
-                (
-                    f"client_{i},"
-                    f"active,"
-                    f"{locations[i % len(locations)]},"
-                    f"2026-05-01\n"
-                )
+                (f"client_{i},active,{locations[i % len(locations)]},2026-05-01\n")
             )
 
     print(f"Seeded clients: {output_path}")

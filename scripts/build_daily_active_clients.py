@@ -1,4 +1,5 @@
 import argparse
+
 from pyspark.sql import SparkSession
 
 from src.processing.daily_active_clients import (

@@ -19,16 +19,13 @@ def build_daily_usage_rate(
     daily_active_clients_df = spark.read.parquet(str(active_clients_path))
 
     daily_usage_rate_df = (
-        daily_checkins_df
-        .join(daily_active_clients_df, on="metric_date", how="inner")
+        daily_checkins_df.join(daily_active_clients_df, on="metric_date", how="inner")
         .withColumn(
             "usage_rate",
             when(
                 col("active_clients") == 0,
                 0.0,
-            ).otherwise(
-                col("checkin_count") / col("active_clients")
-            ),
+            ).otherwise(col("checkin_count") / col("active_clients")),
         )
         .select("metric_date", "usage_rate")
     )

@@ -1,4 +1,5 @@
 import argparse
+
 from pyspark.sql import SparkSession
 
 from src.processing.daily_usage_rate import build_daily_usage_rate
