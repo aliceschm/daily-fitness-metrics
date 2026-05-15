@@ -1,7 +1,16 @@
 from pathlib import Path
 
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import countDistinct
+from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql.functions import col, countDistinct
+
+
+def build_daily_checkins_df(checkins_df: DataFrame, metric_date: str) -> DataFrame:
+    return (
+        checkins_df.filter(col("checkin_date") == metric_date)
+        .groupBy("checkin_date")
+        .agg(countDistinct("client_id").alias("checkin_count"))
+        .withColumnRenamed("checkin_date", "metric_date")
+    )
 
 
 def build_daily_checkins(
@@ -16,10 +25,9 @@ def build_daily_checkins(
 
     checkins_df = spark.read.parquet(str(input_path))
 
-    daily_checkins_df = (
-        checkins_df.groupBy("checkin_date")
-        .agg(countDistinct("client_id").alias("checkin_count"))
-        .withColumnRenamed("checkin_date", "metric_date")
+    daily_checkins_df = build_daily_checkins_df(
+        checkins_df=checkins_df,
+        metric_date=metric_date,
     )
 
     daily_checkins_df.write.mode("overwrite").parquet(str(output_path))

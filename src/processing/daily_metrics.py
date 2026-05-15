@@ -1,6 +1,26 @@
 from pathlib import Path
 
-from pyspark.sql import SparkSession
+from pyspark.sql import DataFrame, SparkSession
+
+
+def build_daily_metrics_df(
+    daily_signups_df: DataFrame,
+    daily_checkins_df: DataFrame,
+    daily_active_clients_df: DataFrame,
+    daily_usage_rate_df: DataFrame,
+) -> DataFrame:
+    return (
+        daily_signups_df.join(daily_checkins_df, on="metric_date", how="inner")
+        .join(daily_active_clients_df, on="metric_date", how="inner")
+        .join(daily_usage_rate_df, on="metric_date", how="inner")
+        .select(
+            "metric_date",
+            "signup_count",
+            "checkin_count",
+            "active_clients",
+            "usage_rate",
+        )
+    )
 
 
 def build_daily_metrics(
@@ -24,17 +44,11 @@ def build_daily_metrics(
     daily_active_clients_df = spark.read.parquet(str(active_clients_path))
     daily_usage_rate_df = spark.read.parquet(str(usage_rate_path))
 
-    daily_metrics_df = (
-        daily_signups_df.join(daily_checkins_df, on="metric_date", how="inner")
-        .join(daily_active_clients_df, on="metric_date", how="inner")
-        .join(daily_usage_rate_df, on="metric_date", how="inner")
-        .select(
-            "metric_date",
-            "signup_count",
-            "checkin_count",
-            "active_clients",
-            "usage_rate",
-        )
+    daily_metrics_df = build_daily_metrics_df(
+        daily_signups_df=daily_signups_df,
+        daily_checkins_df=daily_checkins_df,
+        daily_active_clients_df=daily_active_clients_df,
+        daily_usage_rate_df=daily_usage_rate_df,
     )
 
     daily_metrics_df.write.mode("overwrite").parquet(str(output_path))
