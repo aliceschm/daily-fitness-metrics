@@ -61,9 +61,8 @@ python -m scripts.run_daily_pipeline \
 
 ## Roadmap
 
-- multi-day processing
 - Airflow orchestration
 - PostgreSQL warehouse
 - incremental processing
 - observability
-- testing
+
