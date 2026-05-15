@@ -35,6 +35,17 @@ def iter_dates(start_date: str, end_date: str):
         current += timedelta(days=1)
 
 
+def resolve_metric_dates(
+    metric_date: str | None,
+    start_date: str | None,
+    end_date: str | None,
+) -> list[str]:
+    if metric_date:
+        return [metric_date]
+
+    return list(iter_dates(start_date, end_date))
+
+
 def run_for_date(
     spark: SparkSession,
     metric_date: str,
@@ -90,35 +101,53 @@ def run_for_date(
 
 
 def main(
-    metric_date: str | None,
-    start_date: str | None,
-    end_date: str | None,
+    args: list[str] | None = None,
     sources_base_path: str = "sources",
     staging_base_path: str = "staging_metrics",
     warehouse_base_path: str = "warehouse",
     show_output: bool = True,
 ) -> None:
+    parsed_args = parse_args(args)
+    metric_dates = resolve_metric_dates(
+        metric_date=parsed_args.metric_date,
+        start_date=parsed_args.start_date,
+        end_date=parsed_args.end_date,
+    )
+
     spark = create_spark()
 
     try:
-        if metric_date:
-            dates = [metric_date]
-        else:
-            dates = list(iter_dates(start_date, end_date))
-
-        for current_date in dates:
-            print(f"Processing metrics for {current_date}")
-            run_for_date(
-                spark=spark,
-                metric_date=current_date,
-                sources_base_path=sources_base_path,
-                staging_base_path=staging_base_path,
-                warehouse_base_path=warehouse_base_path,
-                show_output=show_output,
-            )
+        run_pipeline(
+            spark=spark,
+            metric_dates=metric_dates,
+            sources_base_path=sources_base_path,
+            staging_base_path=staging_base_path,
+            warehouse_base_path=warehouse_base_path,
+            show_output=show_output,
+        )
 
     finally:
         spark.stop()
+
+
+def run_pipeline(
+    spark: SparkSession,
+    metric_dates: list[str],
+    sources_base_path: str = "sources",
+    staging_base_path: str = "staging_metrics",
+    warehouse_base_path: str = "warehouse",
+    show_output: bool = True,
+) -> None:
+    for current_date in metric_dates:
+        print(f"Processing metrics for {current_date}")
+        run_for_date(
+            spark=spark,
+            metric_date=current_date,
+            sources_base_path=sources_base_path,
+            staging_base_path=staging_base_path,
+            warehouse_base_path=warehouse_base_path,
+            show_output=show_output,
+        )
 
 
 def parse_args(args: list[str] | None = None) -> argparse.Namespace:
@@ -142,10 +171,4 @@ def parse_args(args: list[str] | None = None) -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    args = parse_args()
-
-    main(
-        metric_date=args.metric_date,
-        start_date=args.start_date,
-        end_date=args.end_date,
-    )
+    main()
